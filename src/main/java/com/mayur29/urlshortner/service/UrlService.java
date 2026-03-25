@@ -25,12 +25,6 @@ public class UrlService {
     }
 
     public String shorten(String url) {
-        UrlMapping cacheUrl = redisService.get(url,UrlMapping.class);
-        if(cacheUrl!=null){
-            log.info("foundUrl ::{}",cacheUrl);
-            return BIT_LY +cacheUrl.getCode();
-        }
-
         UrlMapping foundUrl = urlRepository.findByLongUrl(url);
         if(foundUrl!=null){
             log.info("foundUrl ::{}",foundUrl);
@@ -46,7 +40,6 @@ public class UrlService {
                     .longUrl(url)
                     .build();
             urlRepository.save(mapping);
-            redisService.set(url,code,5L);
         }catch (Exception e){
             UrlMapping existing = urlRepository.findByLongUrl(url);
             if(existing!=null){
@@ -59,6 +52,19 @@ public class UrlService {
     }
 
     public String findByCode(String code) {
-        return urlRepository.findLongUrlByCode(code).getLongUrl();
+        UrlMapping cacheUrl = redisService.get(code,UrlMapping.class);
+        if(cacheUrl!=null){
+            log.info("cacheUrl ::{}",cacheUrl);
+            return BIT_LY +cacheUrl.getLongUrl();
+        }
+
+        UrlMapping urlMapping = urlRepository.findLongUrlByCode(code);
+        if(urlMapping!=null){
+            log.info("url found in db ::{}",urlMapping);
+            redisService.set(code,urlMapping.getLongUrl(),5L);
+            return BIT_LY +urlMapping.getLongUrl();
+        }
+
+        throw new RuntimeException("Url Not found!!!!");
     }
 }
