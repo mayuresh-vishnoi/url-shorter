@@ -14,17 +14,23 @@ import java.util.Optional;
 public class UrlService {
 
     public static final String BIT_LY = "http://bit.ly/";
-    private UrlRepository urlRepository;
-    private SnowflakeId snowflakeId;
-    private Base62 base62;
+    private final UrlRepository urlRepository;
+    private final SnowflakeId snowflakeId;
+    private final RedisService redisService;
 
-    public UrlService(UrlRepository urlRepository,Base62 base62,SnowflakeId snowflakeId){
+    public UrlService(UrlRepository urlRepository,SnowflakeId snowflakeId,RedisService redisService){
         this.urlRepository = urlRepository;
-        this.base62 = base62;
         this.snowflakeId = snowflakeId;
+        this.redisService = redisService;
     }
 
     public String shorten(String url) {
+        UrlMapping cacheUrl = redisService.get(url,UrlMapping.class);
+        if(cacheUrl!=null){
+            log.info("foundUrl ::{}",cacheUrl);
+            return BIT_LY +cacheUrl.getCode();
+        }
+
         UrlMapping foundUrl = urlRepository.findByLongUrl(url);
         if(foundUrl!=null){
             log.info("foundUrl ::{}",foundUrl);
@@ -40,6 +46,7 @@ public class UrlService {
                     .longUrl(url)
                     .build();
             urlRepository.save(mapping);
+            redisService.set(url,code,5L);
         }catch (Exception e){
             UrlMapping existing = urlRepository.findByLongUrl(url);
             if(existing!=null){
