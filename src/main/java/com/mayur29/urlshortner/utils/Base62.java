@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Base62 {
 
-    private static final String CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV1234567890";
+    private static final String CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
     public static String encode(Long value){
         StringBuilder sb = new StringBuilder();
