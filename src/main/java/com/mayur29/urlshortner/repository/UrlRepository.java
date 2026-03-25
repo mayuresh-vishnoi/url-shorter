@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UrlRepository extends JpaRepository<UrlMapping,Long> {
-    Optional<UrlMapping> findByLongUrl(String url);
+    UrlMapping findByLongUrl(String url);
 
     UrlMapping findLongUrlByCode(String code);
 }

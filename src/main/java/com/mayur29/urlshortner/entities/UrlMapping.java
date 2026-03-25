@@ -16,6 +16,7 @@ public class UrlMapping {
 
     @Id
     private Long id;
+    @Column(unique = true)
     private String longUrl;
     private String code;
 }
