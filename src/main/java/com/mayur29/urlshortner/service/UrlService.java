@@ -4,6 +4,7 @@ import com.mayur29.urlshortner.entities.UrlMapping;
 import com.mayur29.urlshortner.repository.UrlRepository;
 import com.mayur29.urlshortner.utils.Base62;
 import com.mayur29.urlshortner.utils.SnowflakeId;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,7 @@ public class UrlService {
         return BIT_LY+code;
     }
 
+    @RateLimiter(name = "findByCode",fallbackMethod = "findByCodeFallback",permits = 2)
     public String findByCode(String code) {
         UrlMapping cacheUrl = redisService.get(code,UrlMapping.class);
         if(cacheUrl!=null){
@@ -61,10 +63,14 @@ public class UrlService {
         UrlMapping urlMapping = urlRepository.findLongUrlByCode(code);
         if(urlMapping!=null){
             log.info("url found in db ::{}",urlMapping);
-            redisService.set(code,urlMapping.getLongUrl(),5L);
+            redisService.set(code,urlMapping,5L);
             return BIT_LY +urlMapping.getLongUrl();
         }
 
         throw new RuntimeException("Url Not found!!!!");
+    }
+
+    public String findByCodeFallback(String code) {
+        return "Only two hits allowed";
     }
 }
